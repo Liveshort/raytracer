@@ -24,12 +24,12 @@
 /************************************************************
  * SKIP THIS FILE
  ************************************************************/
-//This is the code to load a mesh and a material file. 
+//This is the code to load a mesh and a material file.
 //it is not beautiful, but works on all tested systems
 //IGNORE this file you do not need to understand this code,
 //nor change it.
 
-   
+
 using namespace std;
 //dirty hack... do not do this at home... ;)
 const unsigned int LINE_LEN=256;
@@ -100,15 +100,15 @@ void Mesh::draw(){
     glEnd();
 }
 
-    
-    
-    
+
+
+
 bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
 {
     vertices.clear();
     triangles.clear();
 	texcoords.clear();
-	
+
     std::vector<int> vhandles;
     std::vector<int> texhandles;
 
@@ -126,7 +126,7 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
     defaultMat.set_illum(2);
     defaultMat.set_name(std::string("StandardMaterialInitFromTriMesh"));
     materials.push_back(defaultMat);
-    
+
     map<string, unsigned int> materialIndex;
     char                   s[LINE_LEN];
     float                  x, y, z;
@@ -166,9 +166,9 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
 #endif
 
     while(in && !feof(in) && fgets(s, LINE_LEN, in))
-    {     
+    {
         // comment
-        if (s[0] == '#' || isspace(s[0]) || s[0]=='\0') continue;   
+        if (s[0] == '#' || isspace(s[0]) || s[0]=='\0') continue;
 
         // material file
         else if (strncmp(s, "mtllib ", 7)==0)
@@ -182,7 +182,7 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
             {
 				if (t[i] < 32 || t[i] == 255)
 				{
-					break; 
+					break;
 				}
             }
 			std::string file;
@@ -199,7 +199,7 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
             char *p0 = s+6, *p1;
             while( isspace(*++p0) ); p1=p0;
             while(!isspace(*p1)) ++p1; *p1='\0';
-            matname = p0;      
+            matname = p0;
             if (materialIndex.find(matname)==materialIndex.end())
             {
 				printf("Warning! Material '%s' not defined in material file. Taking default!\n", matname.c_str());
@@ -219,7 +219,7 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
         {
             //we do nothing
 			Vec3Df texCoords(0,0,0);
-		
+
 			//we only support 2d tex coords
             sscanf(s, "vt %f %f", &texCoords[0], &texCoords[1]);
             texcoords.push_back(texCoords);
@@ -248,15 +248,15 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
                 // overwrite next separator
 
                 // skip '/', '\n', ' ', '\0', '\r' <-- don't forget Windows
-                while (*p1 != '/' && *p1 != '\r' && *p1 != '\n' && 
+                while (*p1 != '/' && *p1 != '\r' && *p1 != '\n' &&
                        *p1 != ' ' && *p1 != '\0')
                   ++p1;
-                    
+
                 // detect end of vertex
                 if (*p1 != '/') endOfVertex = true;
 
                 // replace separator by '\0'
-                if (*p1 != '\0') 
+                if (*p1 != '\0')
                 {
                     *p1 = '\0';
                     p1++; // point to next token
@@ -265,7 +265,7 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
                 // detect end of line and break
                 if (*p1 == '\0' || *p1 == '\n')
                     p1 = 0;
-                
+
 
                 // read next vertex component
                 if (*p0 != '\0')
@@ -278,14 +278,14 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
                             vhandles.push_back(tmp);
                         }
                         break;
-                      
+
                         case 1: // texture coord
                         {
                             int tmp = atoi(p0)-1;
                             texhandles.push_back(tmp);
                         }
                         break;
-                      
+
                         case 2: // normal
                         //assert(!vhandles.empty());
                         //assert((unsigned int)(atoi(p0)-1) < normals.size());
@@ -327,19 +327,19 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
 					triangles.push_back(
                         Triangle(	vhandles[v0], texhandles[t0],
                                     vhandles[v1], texhandles[t1],
-                                    vhandles[v2], texhandles[t2]));
+                                    vhandles[v2], texhandles[t2], triangles.size()-1));
                     triangleMaterials.push_back(m);
 				}
 			}
 			else if (vhandles.size()==3)
 			{
-				triangles.push_back(Triangle(vhandles[0], texhandles[0], vhandles[1], texhandles[1], vhandles[2], texhandles[2]));
+				triangles.push_back(Triangle(vhandles[0], texhandles[0], vhandles[1], texhandles[1], vhandles[2], texhandles[2], triangles.size()-1));
 				triangleMaterials.push_back((materialIndex.find(matname))->second);
 			}
 			else
 			{
 				printf("TriMesh::LOAD: Unexpected number of face vertices (<3). Ignoring face");
-			}            
+			}
         }
         memset(&s, 0, LINE_LEN);
     }
@@ -362,8 +362,8 @@ bool Mesh::loadMtl(const char * filename, std::map<string, unsigned int> & mater
     {
        printf("  Warning! Material file '%s' not found!\n", filename);
         return false;
-    }            
-    
+    }
+
     char   line[LINE_LEN];
     std::string textureName;
 
@@ -452,7 +452,7 @@ bool Mesh::loadMtl(const char * filename, std::map<string, unsigned int> & mater
           // map_d,  opacity map
           // just skip this
 			mat.set_textureName(t);
-			
+
         }
         else if (strncmp(line, "Tr ", 3)==0 ) // transparency value
         {

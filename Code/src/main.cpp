@@ -9,6 +9,7 @@
 #include <windows.h>
 #endif
 #include <stdlib.h>
+#include <chrono>
 #include <math.h>
 #include <assert.h>
 #include "raytracing.h"
@@ -27,13 +28,13 @@
 Vec3Df MyCameraPosition;
 
 //MyLightPositions stores all the light positions to use
-//for the ray tracing. Please notice, the light that is 
-//used for the real-time rendering is NOT one of these, 
+//for the ray tracing. Please notice, the light that is
+//used for the real-time rendering is NOT one of these,
 //but following the camera instead.
 std::vector<Vec3Df> MyLightPositions;
 
-//Main mesh 
-Mesh MyMesh; 
+//Main mesh
+Mesh MyMesh;
 
 unsigned int WindowSize_X = 800;  // resolution X
 unsigned int WindowSize_Y = 800;  // resolution Y
@@ -75,7 +76,7 @@ int main(int argc, char** argv)
     // positioning and size of window
     glutInitWindowPosition(200, 100);
     glutInitWindowSize(WindowSize_X,WindowSize_Y);
-    glutCreateWindow(argv[0]);	
+    glutCreateWindow(argv[0]);
 
     //initialize viewpoint
     glMatrixMode(GL_MODELVIEW);
@@ -98,10 +99,10 @@ int main(int argc, char** argv)
     //clear color of the background is black.
 	glClearColor (0.0, 0.0, 0.0, 0.0);
 
-	
+
 	// Activate rendering modes
     //activate depth test
-	glEnable( GL_DEPTH_TEST ); 
+	glEnable( GL_DEPTH_TEST );
     //draw front-facing triangles filled
 	//and back-facing triangles as wires
     glPolygonMode(GL_FRONT,GL_FILL);
@@ -121,10 +122,10 @@ int main(int argc, char** argv)
 
 	init();
 
-    
+
 	//main loop for glut... this just runs your application
     glutMainLoop();
-        
+
     return 0;  // execution never reaches this point
 }
 
@@ -139,7 +140,7 @@ int main(int argc, char** argv)
 
 
 /**
- * OpenGL setup - functions do not need to be changed! 
+ * OpenGL setup - functions do not need to be changed!
  * you can SKIP AHEAD TO THE KEYBOARD FUNCTION
  */
 //what to do before drawing an image
@@ -148,8 +149,8 @@ int main(int argc, char** argv)
 	glPushAttrib(GL_ALL_ATTRIB_BITS);//store GL state
     // Clear everything
     glClear( GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT); // clear image
-    
-    glLoadIdentity();  
+
+    glLoadIdentity();
 
     tbVisuTransform(); // init mouse
 
@@ -182,7 +183,7 @@ void produceRay(int x_I, int y_I, Vec3Df * origin, Vec3Df * dest)
 		int y_new = viewport[3] - y_I;
 
 		double x, y, z;
-		
+
 		gluUnProject(x_I, y_new, 0, modelview, projection, viewport, &x, &y, &z);
 		origin->p[0]=float(x);
 		origin->p[1]=float(y);
@@ -220,11 +221,11 @@ void keyboard(unsigned char key, int x, int y)
 	{
 		//Pressing r will launch the raytracing.
 		cout<<"Raytracing"<<endl;
-				
+
 
 		//Setup an image with the size of the current image.
 		Image result(WindowSize_X,WindowSize_Y);
-		
+
 		//produce the rays for each pixel, by first computing
 		//the rays for the corners of the frustum.
 		Vec3Df origin00, dest00;
@@ -233,17 +234,18 @@ void keyboard(unsigned char key, int x, int y)
 		Vec3Df origin11, dest11;
 		Vec3Df origin, dest;
 
-
 		produceRay(0,0, &origin00, &dest00);
 		produceRay(0,WindowSize_Y-1, &origin01, &dest01);
 		produceRay(WindowSize_X-1,0, &origin10, &dest10);
 		produceRay(WindowSize_X-1,WindowSize_Y-1, &origin11, &dest11);
 
-		
-		for (unsigned int y=0; y<WindowSize_Y;++y)
-			for (unsigned int x=0; x<WindowSize_X;++x)
-			{
-				//produce the rays for each pixel, by interpolating 
+		double percentageDone;
+		auto start = std::chrono::system_clock::now();
+
+		#pragma omp parallel for ordered schedule(dynamic)
+		for (unsigned int y=0; y<WindowSize_Y;++y) {
+			for (unsigned int x=0; x<WindowSize_X;++x) {
+				//produce the rays for each pixel, by interpolating
 				//the four rays of the frustum corners.
 				float xscale=1.0f-float(x)/(WindowSize_X-1);
 				float yscale=1.0f-float(y)/(WindowSize_Y-1);
@@ -255,9 +257,17 @@ void keyboard(unsigned char key, int x, int y)
 
 				//launch raytracing for the given ray.
 				Vec3Df rgb = performRayTracing(origin, dest);
-				//store the result in an image 
+				//store the result in an image
 				result.setPixel(x,y, RGBValue(rgb[0], rgb[1], rgb[2]));
 			}
+
+			percentageDone = (double) y / (double) (WindowSize_Y - 1) * 100;
+			std::chrono::duration<double> diff = std::chrono::system_clock::now() - start;
+
+			printf("\rPercentage done: [%6.4f%%]    Elapsed time (seconds) : [%4.2f]", percentageDone, diff.count());
+		}
+
+		printf("\n");
 
 		result.writeImage("result.bmp");
 		break;
@@ -266,11 +276,10 @@ void keyboard(unsigned char key, int x, int y)
         exit(0);
     }
 
-	
+
 	//produce the ray for the current mouse position
 	Vec3Df testRayOrigin, testRayDestination;
 	produceRay(x, y, &testRayOrigin, &testRayDestination);
 
 	yourKeyboardFunc(key,x,y, testRayOrigin, testRayDestination);
 }
-

@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #include <OpenGL/gl.h>
@@ -9,33 +10,31 @@
 #ifdef WIN32
 #include <windows.h>
 #endif
+
 #include "raytracing.h"
 
+using namespace std;
 
 //temporary variables
-//these are only used to illustrate 
-//a simple debug drawing. A ray 
+//these are only used to illustrate
+//a simple debug drawing. A ray
 Vec3Df testRayOrigin;
 Vec3Df testRayDestination;
 
+// some needed global variables
+vector<AABB> boundingBoxes;
 
-//use this function for any preprocessing of the mesh.
 void init()
 {
-	//load the mesh file
-	//please realize that not all OBJ files will successfully load.
-	//Nonetheless, if they come from Blender, they should, if they 
-	//are exported as WavefrontOBJ.
-	//PLEASE ADAPT THE LINE BELOW TO THE FULL PATH OF THE dodgeColorTest.obj
-	//model, e.g., "C:/temp/myData/GraphicsIsFun/dodgeColorTest.obj", 
-	//otherwise the application will not load properly
+    // load mesh
+    cout << "Loading mesh..." << endl;
     MyMesh.loadMesh("dodgeColorTest.obj", true);
 	MyMesh.computeVertexNormals();
 
-	//one first move: initialize the first light source
-	//at least ONE light source has to be in the scene!!!
-	//here, we set it to the current location of the camera
 	MyLightPositions.push_back(MyCameraPosition);
+
+    cout << "Calculating bounding boxes..." << endl;
+    init_AABB(boundingBoxes);
 }
 
 //return the color of your pixel.
@@ -53,7 +52,7 @@ void yourDebugDraw()
 
 	//let's draw the mesh
 	MyMesh.draw();
-	
+
 	//let's draw the lights in the scene as points
 	glPushAttrib(GL_ALL_ATTRIB_BITS); //store all GL attributes
 	glDisable(GL_LIGHTING);
@@ -64,9 +63,9 @@ void yourDebugDraw()
 		glVertex3fv(MyLightPositions[i].pointer());
 	glEnd();
 	glPopAttrib();//restore all GL attributes
-	//The Attrib commands maintain the state. 
+	//The Attrib commands maintain the state.
 	//e.g., even though inside the two calls, we set
-	//the color to white, it will be reset to the previous 
+	//the color to white, it will be reset to the previous
 	//state after the pop.
 
 
@@ -84,46 +83,33 @@ void yourDebugDraw()
 	glVertex3fv(MyLightPositions[0].pointer());
 	glEnd();
 	glPopAttrib();
-	
-	//draw whatever else you want...
-	////glutSolidSphere(1,10,10);
-	////allows you to draw a sphere at the origin.
-	////using a glTranslate, it can be shifted to whereever you want
-	////if you produce a sphere renderer, this 
-	////triangulated sphere is nice for the preview
+
+    // draw boundingboxes
+    for (AABB boundingBox : boundingBoxes) draw_AABB(boundingBox);
 }
 
-
-//yourKeyboardFunc is used to deal with keyboard input.
-//t is the character that was pressed
-//x,y is the mouse position in pixels
-//rayOrigin, rayDestination is the ray that is going in the view direction UNDERNEATH your mouse position.
-//
-//A few keys are already reserved: 
-//'L' adds a light positioned at the camera location to the MyLightPositions vector
-//'l' modifies the last added light to the current 
-//    camera position (by default, there is only one light, so move it with l)
-//    ATTENTION These lights do NOT affect the real-time rendering. 
-//    You should use them for the raytracing.
-//'r' calls the function performRaytracing on EVERY pixel, using the correct associated ray. 
-//    It then stores the result in an image "result.bmp".
-//    Initially, this function is fast (performRaytracing simply returns 
-//    the target of the ray - see the code above), but once you replaced 
-//    this function and raytracing is in place, it might take a 
-//    while to complete...
+// function that deals with keyboard input
 void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3Df & rayDestination)
 {
 
 	//here, as an example, I use the ray to fill in the values for my upper global ray variable
 	//I use these variables in the debugDraw function to draw the corresponding ray.
 	//try it: Press a key, move the camera, see the ray that was launched as a line.
-	testRayOrigin=rayOrigin;	
+	testRayOrigin=rayOrigin;
 	testRayDestination=rayDestination;
-	
-	// do here, whatever you want with the keyboard input t.
-	
-	//...
-	
-	
-	std::cout<<t<<" pressed! The mouse was in location "<<x<<","<<y<<"!"<<std::endl;	
+
+	switch(t) {
+        case 'i':
+            {
+                Ray r = {rayOrigin, (rayDestination - rayOrigin)};
+                r.direction.normalize();
+                calc_inv_direction(r);
+
+                if (intersect_AABB(r, boundingBoxes[0])) cout << "Ray intersected bounding box" << endl;
+                else cout << "Ray did not intersect bounding box" << endl;
+            }
+            break;
+        default:
+            cout << "You pressed a key, but not one that does something in particular..." << endl;
+    }
 }
