@@ -287,7 +287,7 @@ void draw_AABB(AABB & boundingBox) {
 	glPopAttrib();
 }
 
-bool intersect_AABB(Ray & r, AABB & b) {
+bool intersect_AABB(const Ray & r, const AABB & b) {
     double tx1 = (b.min[0] - r.origin[0]) * r.inv_direction[0];
     double tx2 = (b.max[0] - r.origin[0]) * r.inv_direction[0];
 

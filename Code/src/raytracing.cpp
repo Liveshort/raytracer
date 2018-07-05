@@ -109,6 +109,19 @@ void yourKeyboardFunc(char t, int x, int y, const Vec3Df & rayOrigin, const Vec3
                 else cout << "Ray did not intersect bounding box" << endl;
             }
             break;
+        case 't':
+            {
+                Ray r = {rayOrigin, (rayDestination - rayOrigin)};
+                r.direction.normalize();
+
+                Intersection intersect;
+
+                if (intersect_mesh(0, r, Triangle(), boundingBoxes, intersect)) {
+                    cout << "Found intersection on point " << intersect.point << endl;
+                    testRayDestination = intersect.point;
+                }
+            }
+            break;
         default:
             cout << "You pressed a key, but not one that does something in particular..." << endl;
     }

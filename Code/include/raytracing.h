@@ -39,13 +39,22 @@ struct Ray {
     Vec3Df inv_direction;
 };
 
+struct Intersection {
+	Vec3Df point;
+	Triangle triangle;
+	Material material;
+	float distance;
+	float schlickCosTheta;
+};
+
 // important shared functions
 void calc_inv_direction(Ray & r);
 
 void init_AABB(std::vector<AABB> & boundingBoxes);
 void draw_AABB(AABB & boundingBox);
-bool intersect_AABB(Ray & r, AABB & b);
+bool intersect_AABB(const Ray & r, const AABB & b);
 
-bool intersect_triangle(Ray & r, Triangle & t, Vec3Df & point);
+bool intersect_triangle(const Ray & r, const Triangle & t, const Triangle & ignoreTriangle, Vec3Df & point, float & distance);
+bool intersect_mesh(const unsigned int level, const Ray & r, const Triangle & ignoreTriangle, std::vector<AABB> & boundingBoxes, Intersection & intersect);
 
 #endif

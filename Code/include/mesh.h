@@ -175,7 +175,13 @@ public:
         t[1] = t2.t[1];
         t[2] = t2.t[2];
 
+        i = t2.i;
+
 		return (*this);
+    }
+    inline bool operator== (const Triangle & t2) const {
+        if (i == t2.i) return true;
+        else return false;
     }
 	//vertex position
     unsigned int v[3];
