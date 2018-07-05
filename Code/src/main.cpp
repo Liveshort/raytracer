@@ -32,6 +32,7 @@ Vec3Df MyCameraPosition;
 //used for the real-time rendering is NOT one of these,
 //but following the camera instead.
 std::vector<Vec3Df> MyLightPositions;
+std::vector<float> MyLightPositionPower;
 
 //Main mesh
 Mesh MyMesh;
@@ -256,7 +257,11 @@ void keyboard(unsigned char key, int x, int y)
 					(1-yscale)*(xscale*dest01+(1-xscale)*dest11);
 
 				//launch raytracing for the given ray.
-				Vec3Df rgb = performRayTracing(origin, dest);
+				Vec3Df rgb = Vec3Df(0,0,0);
+				Ray r = {origin, dest-origin};
+				r.direction.normalize();
+
+				trace_ray(0, r, rgb, Triangle());
 				//store the result in an image
 				result.setPixel(x,y, RGBValue(rgb[0], rgb[1], rgb[2]));
 			}

@@ -141,7 +141,7 @@ class Material
  class Triangle {
 public:
     inline Triangle () {
-        v[0] = v[1] = v[2] = 0;
+        v[0] = v[1] = v[2] = 0; i = -1;
     }
     inline Triangle (const Triangle & t2) {
         v[0] = t2.v[0];

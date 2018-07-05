@@ -6,6 +6,18 @@
 
 using namespace std;
 
+// triangle normal is the average of the vertex normals
+Vec3Df compute_surface_normal(const Triangle & t) {
+	Vec3Df U = MyMesh.vertices[t.v[1]].p - MyMesh.vertices[t.v[0]].p;
+	Vec3Df V = MyMesh.vertices[t.v[2]].p - MyMesh.vertices[t.v[0]].p;
+
+	float normalX = U.p[1] * V.p[2] - U.p[2] * V.p[1];
+	float normalY = U.p[2] * V.p[0] - U.p[0] * V.p[2];
+	float normalZ = U.p[0] * V.p[1] - U.p[1] * V.p[0];
+
+	return Vec3Df(normalX, normalY, normalZ);
+}
+
 // Moller Trumbore method
 bool intersect_triangle(const Ray & r, const Triangle & t, const Triangle & ignoreTriangle, Vec3Df & point, float & distance) {
     if (t == ignoreTriangle) return false;
@@ -46,11 +58,15 @@ bool intersect_triangle(const Ray & r, const Triangle & t, const Triangle & igno
 }
 
 // returns whether the ray hit something or not
-bool intersect_mesh(const unsigned int level, const Ray & r, const Triangle & ignoreTriangle, vector<AABB> & boundingBoxes, Intersection & intersect) {
+bool intersect_mesh(const unsigned int level, Ray & r, const Triangle & ignoreTriangle, const vector<AABB> & boundingBoxes, Intersection & intersect) {
 	intersect.distance = INFINITY;
+    calc_inv_direction(r);
+
+    unsigned counter = 0;
 
 	for (AABB box : boundingBoxes) {
         if (intersect_AABB(r, box)) {
+            counter++;
             for (Triangle t : box.triangles) {
                 Vec3Df intersectionPoint;
                 float distance;
@@ -63,15 +79,15 @@ bool intersect_mesh(const unsigned int level, const Ray & r, const Triangle & ig
                         intersect.distance = distance;
                         intersect.material = MyMesh.materials[MyMesh.triangleMaterials[t.i]];
 
-                        // Vec3Df n = calculateSurfaceNormal(t);
-                        // n.normalize();
-                        //
-                        // intersect.schlickCosTheta = fabs(Vec3Df::dotProduct(n, r.direction));
+                        Vec3Df n = compute_surface_normal(t);
+                        intersect.schlickCosTheta = fabs(Vec3Df::dotProduct(n, r.direction));
                     }
                 }
             }
         }
     }
+
+    // cout << "Intersected with " << counter << " boxes" << endl;
 
 	// if (intersect.distance < 1000000 && level == 0 && drawRecurseRays) {
 	// 	Vec3Df intensity = getLit(intersect.point, intersect.triangle);

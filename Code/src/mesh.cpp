@@ -327,13 +327,13 @@ bool Mesh::loadMesh(const char * filename, bool randomizeTriangulation)
 					triangles.push_back(
                         Triangle(	vhandles[v0], texhandles[t0],
                                     vhandles[v1], texhandles[t1],
-                                    vhandles[v2], texhandles[t2], triangles.size()-1));
+                                    vhandles[v2], texhandles[t2], triangles.size()));
                     triangleMaterials.push_back(m);
 				}
 			}
 			else if (vhandles.size()==3)
 			{
-				triangles.push_back(Triangle(vhandles[0], texhandles[0], vhandles[1], texhandles[1], vhandles[2], texhandles[2], triangles.size()-1));
+				triangles.push_back(Triangle(vhandles[0], texhandles[0], vhandles[1], texhandles[1], vhandles[2], texhandles[2], triangles.size()));
 				triangleMaterials.push_back((materialIndex.find(matname))->second);
 			}
 			else

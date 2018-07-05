@@ -190,7 +190,7 @@ void init_AABB(vector<AABB> & boundingBoxes) {
         // loop over all current boxes and check if they need to be refined
         for (AABB b : currentBoxes) {
             AABB firstBox, secondBox;
-            if (refine_AABB(b, firstBox, secondBox, level, round(sqrt(initialBox.triangles.size()/2)))) {
+            if (refine_AABB(b, firstBox, secondBox, level, 50)) {//round(sqrt(initialBox.triangles.size()/2)))) {
                 refinedBoxes.push_back(firstBox);
                 refinedBoxes.push_back(secondBox);
             } else {
